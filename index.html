@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Challenge AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #1A1C20;
+    }
+
+    /* Mobile Canvas - iPhone Fullscreen layout */
+    .app-card {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      height: 100dvh;
+      background: #F4F5F9;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      padding-top: env(safe-area-inset-top, 20px);
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+
+    /* Header */
+    .header {
+      padding: 16px 20px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #F4F5F9;
+      z-index: 10;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4F35E3, #7F66FF);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(79, 53, 227, 0.25);
+    }
+
+    .greeting {
+      font-size: 12px;
+      color: #8C8E98;
+    }
+
+    .username {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1A1C20;
+    }
+
+    .bell-icon {
+      width: 40px;
+      height: 40px;
+      background: #FFFFFF;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1A1C20;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .bell-icon.active {
+      background: #4F35E3;
+      color: #FFFFFF;
+    }
+
+    .bell-dot {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      width: 8px;
+      height: 8px;
+      background: #FF4D4D;
+      border-radius: 50%;
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 20px 90px;
+      position: relative;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .content-area::-webkit-scrollbar {
+      display: none;
+    }
+
+    .screen-view {
+      display: none;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .screen-view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Progress Banner */
+    .banner {
+      background: linear-gradient(135deg, #4F35E3 0%, #3723A8 100%);
+      border-radius: 24px;
+      padding: 20px;
+      color: white;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 20px rgba(79, 53, 227, 0.2);
+    }
+
+    .banner-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      max-width: 190px;
+      line-height: 1.3;
+    }
+
+    .banner-sub {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .progress-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: conic-gradient(#00D09C calc(var(--percent) * 1%), rgba(255,255,255,0.2) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .progress-circle::before {
+      content: '';
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: #412BB8;
+      border-radius: 50%;
+    }
+
+    .progress-text {
+      position: relative;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* Empty state */
+    .empty-state {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 30px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .empty-icon {
+      font-size: 36px;
+      color: #4F35E3;
+      margin-bottom: 12px;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: #8C8E98;
+      line-height: 1.4;
+    }
+
+    /* Section Header */
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #1A1C20;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .badge {
+      font-size: 12px;
+      background: #E0E3FF;
+      color: #4F35E3;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* Presets Grid */
+    .preset-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .preset-card {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 16px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .preset-card h4 {
+      font-size: 15px;
+      color: #1A1C20;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .preset-card p {
+      font-size: 12px;
+      color: #8C8E98;
+    }
+
+    /* Tasks */
+    .task-card {
+      background: #FFFFFF;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .task-info h5 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1A1C20;
+      margin-bottom: 2px;
+    }
+
+    .task-info p {
+      font-size: 12px;
+      color: #8C8E98;
+    }
+
+    .task-card.completed h5 {
+      text-decoration: line-through;
+      color: #A0A2AC;
+    }
+
+    .checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      border: 2px solid #D0D5DD;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .checkbox.checked {
+      background: #4F35E3;
+      border-color: #4F35E3;
+      color: white;
+    }
+
+    /* Calendar Strip */
+    .calendar-strip {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .calendar-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px;
+      border-radius: 18px;
+      background: #FFFFFF;
+      min-width: 54px;
+      cursor: pointer;
+    }
+
+    .calendar-day.active {
+      background: #4F35E3;
+      color: white;
+      box-shadow: 0 6px 14px rgba(79, 53, 227, 0.3);
+    }
+
+    .calendar-day .num {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .calendar-day .dow {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    /* Profile View */
+    .profile-card {
+      background: #FFFFFF;
+      border-radius: 24px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .profile-avatar-large {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4F35E3, #927AFF);
+      color: white;
+      font-size: 32px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+    }
+
+    .profile-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1A1C20;
+      margin-bottom: 4px;
+    }
+
+    .profile-subtitle {
+      font-size: 13px;
+      color: #8C8E98;
+      margin-bottom: 16px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 16px;
+      border-top: 1px solid #F0F2F6;
+    }
+
+    .stat-item h6 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #4F35E3;
+    }
+
+    .stat-item p {
+      font-size: 11px;
+      color: #8C8E98;
+    }
+
+    .btn-logout {
+      width: 100%;
+      padding: 16px;
+      background: #FFEBEB;
+      color: #FF4D4D;
+      border: none;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Modal Form */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: flex-end;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #FFFFFF;
+      border-radius: 32px 32px 0 0;
+      padding: 28px 24px calc(env(safe-area-inset-bottom, 20px) + 20px);
+      animation: slideUp 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid #E2E8F0;
+      font-size: 15px;
+      outline: none;
+      background: #F8FAFC;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: #4F35E3;
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    /* Auth Overlay */
+    .auth-overlay {
+      position: absolute;
+      inset: 0;
+      background: #F4F5F9;
+      z-index: 200;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .auth-overlay.hidden {
+      display: none;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .auth-logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #4F35E3, #7F66FF);
+      color: white;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px;
+      box-shadow: 0 10px 20px rgba(79, 53, 227, 0.3);
+    }
+
+    /* Bottom Navigation Bar */
+    .navbar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(65px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: #FFFFFF;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      border-top: 1px solid rgba(0,0,0,0.05);
+      z-index: 50;
+    }
+
+    .nav-item {
+      background: none;
+      border: none;
+      color: #A0A2AC;
+      font-size: 20px;
+      cursor: pointer;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-item.active {
+      color: #4F35E3;
+    }
+
+    .add-btn {
+      width: 52px;
+      height: 52px;
+      background: #4F35E3;
+      color: white;
+      border-radius: 50%;
+      border: none;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(79, 53, 227, 0.4);
+      transform: translateY(-10px);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    
+    <!-- Auth Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+      <div class="auth-header">
+        <div class="auth-logo"><i class="fa-solid fa-bolt"></i></div>
+        <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Challenge AI</h2>
+        <p style="font-size: 13px; color: #8C8E98;">Введите данные своего аккаунта</p>
+      </div>
+
+      <form onsubmit="handleAuth(event)">
+        <div class="form-group">
+          <label>Ваш никнейм</label>
+          <input type="text" id="authUsername" placeholder="Livia" required>
+        </div>
+        <div class="form-group">
+          <label>Пароль</label>
+          <input type="password" id="authPassword" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-submit">Создать аккаунт / Войти</button>
+      </form>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="user-info">
+        <div class="avatar" id="userAvatar">?</div>
+        <div>
+          <div class="greeting">Привет!</div>
+          <div class="username" id="displayUsername">Пользователь</div>
+        </div>
+      </div>
+      <div class="bell-icon" id="bellIcon" onclick="requestNotificationPermission()">
+        <i class="fa-regular fa-bell"></i>
+        <div class="bell-dot" id="bellDot" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+
+      <!-- 1. HOME SCREEN -->
+      <div class="screen-view active" id="screenHome">
+        
+        <div id="activeGoalContainer">
+          <!-- Dynamically populated or shown Empty State -->
+        </div>
+
+        <div id="tasksContainer" style="display: none;">
+          <div class="section-title">
+            Задачи на сегодня <span class="badge" id="taskCount">0</span>
+          </div>
+          <div id="taskList"></div>
+        </div>
+
+        <div class="section-title" style="margin-top: 20px;">
+          Выбрать популярный челлендж
+        </div>
+        
+        <div class="preset-grid">
+          <div class="preset-card" onclick="selectPreset('Научиться делать 10 подтягиваний', 'sport', 30)">
+            <div>
+              <h4>💪 10 подтягиваний</h4>
+              <p>30 дней • Спорт и фитнес</p>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 12px; color: #8C8E98;"></i>
+          </div>
+          <div class="preset-card" onclick="selectPreset('Выучить французский с нуля', 'language', 60)">
+            <div>
+              <h4>🇫🇷 Французский язык</h4>
+              <p>60 дней • Языки</p>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 12px; color: #8C8E98;"></i>
+          </div>
+          <div class="preset-card" onclick="selectPreset('Освоить After Effects', 'design', 45)">
+            <div>
+              <h4>🎬 Моушн-дизайн AE</h4>
+              <p>45 дней • Творчество</p>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="font-size: 12px; color: #8C8E98;"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 2. CALENDAR SCREEN -->
+      <div class="screen-view" id="screenCalendar">
+        <div class="section-title" style="margin-bottom: 16px;">Календарь</div>
+        <div class="calendar-strip" id="calendarStrip"></div>
+
+        <div class="section-title" style="margin-top: 10px;">План на сегодня</div>
+        <div id="calendarTaskList"></div>
+      </div>
+
+      <!-- 3. STATS SCREEN -->
+      <div class="screen-view" id="screenStats">
+        <div class="section-title">Аналитика</div>
+        <div class="profile-card" style="text-align: left; padding: 20px;">
+          <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 8px;">Серия челленджа</h4>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <i class="fa-solid fa-fire" style="font-size: 28px; color: #FF9500;"></i>
+            <div>
+              <div style="font-size: 18px; font-weight: 700;" id="streakDays">0 дней</div>
+              <div style="font-size: 12px; color: #8C8E98;">Выполняйте ежедневно!</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 16px;">Мои челленджи</div>
+        <div id="userGoalsList"></div>
+      </div>
+
+      <!-- 4. PROFILE SCREEN -->
+      <div class="screen-view" id="screenProfile">
+        <div class="profile-card">
+          <div class="profile-avatar-large" id="profileAvatarLarge">?</div>
+          <div class="profile-name" id="profileName">Пользователь</div>
+          <div class="profile-subtitle">Уровень: Новичок ⚡</div>
+
+          <div class="stats-row">
+            <div class="stat-item">
+              <h6 id="statCompletedTasks">0</h6>
+              <p>Сделано задач</p>
+            </div>
+            <div class="stat-item">
+              <h6 id="statGoalsCount">0</h6>
+              <p>Активных целей</p>
+            </div>
+            <div class="stat-item">
+              <h6 id="statSuccessRate">0%</h6>
+              <p>Успешность</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти из аккаунта</button>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="navbar">
+      <button class="nav-item active" onclick="switchTab('screenHome', this)">
+        <i class="fa-solid fa-house"></i>
+      </button>
+      <button class="nav-item" onclick="switchTab('screenCalendar', this)">
+        <i class="fa-regular fa-calendar-days"></i>
+      </button>
+      
+      <button class="add-btn" onclick="openCreateModal()">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+
+      <button class="nav-item" onclick="switchTab('screenStats', this)">
+        <i class="fa-solid fa-chart-pie"></i>
+      </button>
+      <button class="nav-item" onclick="switchTab('screenProfile', this)">
+        <i class="fa-regular fa-user"></i>
+      </button>
+    </div>
+
+    <!-- Modal Form -->
+    <div class="modal-overlay" id="createModal">
+      <div class="modal-content">
+        <div class="modal-title">
+          <span>Сгенерировать цель</span>
+          <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="closeCreateModal()"></i>
+        </div>
+
+        <form onsubmit="handleCreateGoal(event)">
+          <div class="form-group">
+            <label>Ваша цель</label>
+            <input type="text" id="newGoalTitle" placeholder="Например: Выучить Python" required>
+          </div>
+
+          <div class="form-group">
+            <label>Длительность</label>
+            <select id="newGoalDuration">
+              <option value="30">30 дней</option>
+              <option value="60">60 дней</option>
+              <option value="90">90 дней</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-submit">Сгенерировать план</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let userData = {
+      username: '',
+      activeGoal: null,
+      tasks: [],
+      completedCount: 0,
+      notificationsEnabled: false
+    };
+
+    const templates = {
+      sport: [
+        "Разминка и суставная гимнастика — 5 минут",
+        "Австралийские подтягивания — 3 подхода по 8 раз",
+        "Удержание в верхней точке — 3x10 сек",
+        "Негативные опускания — 5 повторений"
+      ],
+      language: [
+        "Изучить 10 популярных базовых слов",
+        "Разбрать одно грамматическое правило",
+        "Прослушать короткий аудиодиалог (5 мин)",
+        "Составить 3 простых предложения"
+      ],
+      design: [
+        "Ознакомиться с интерфейсом и ключевыми окнами",
+        "Создать свой первый текстовый слой",
+        "Настроить простейшую анимацию прозрачности",
+        "Изучить базовые горячие клавиши"
+      ]
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      checkAuth();
+      initCalendar();
+      checkNotificationStatus();
+    });
+
+    /* --- NOTIFICATION LOGIC --- */
+    function checkNotificationStatus() {
+      const bell = document.getElementById('bellIcon');
+      const dot = document.getElementById('bellDot');
+
+      if (!("Notification" in window)) {
+        return;
+      }
+
+      if (Notification.permission === "granted") {
+        bell.classList.add('active');
+        dot.style.display = 'none';
+        userData.notificationsEnabled = true;
+      } else if (Notification.permission === "default") {
+        bell.classList.remove('active');
+        dot.style.display = 'block';
+        userData.notificationsEnabled = false;
+      } else {
+        bell.classList.remove('active');
+        dot.style.display = 'none';
+        userData.notificationsEnabled = false;
+      }
+    }
+
+    function requestNotificationPermission() {
+      if (!("Notification" in window)) {
+        alert("Уведомления не поддерживаются в этом браузере.");
+        return;
+      }
+
+      if (Notification.permission === "granted") {
+        sendNotification("Уведомления активны! ⚡", "Вы будете получать напоминания о выполнении мини-заданий.");
+        return;
+      }
+
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          userData.notificationsEnabled = true;
+          saveData();
+          checkNotificationStatus();
+          sendNotification("Уведомления включены! 🎉", "Мы напомним вам о выполнении ежедневных задач.");
+          scheduleTaskReminder();
+        } else {
+          alert("Вы отклонили разрешение на уведомления.");
+        }
+      });
+    }
+
+    function sendNotification(title, body) {
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+          body: body,
+          icon: "https://cdn-icons-png.flaticon.com/512/3112/3112946.png"
+        });
+      }
+    }
+
+    function scheduleTaskReminder() {
+      if (!userData.activeGoal || !userData.tasks.length) return;
+      
+      const uncompleted = userData.tasks.filter(t => !t.done);
+      if (uncompleted.length === 0) return;
+
+      // Тестовое напоминание через 15 секунд после создания/изменения
+      setTimeout(() => {
+        if (Notification.permission === "granted") {
+          const nextTask = uncompleted[0].text;
+          sendNotification(
+            `Время выполнить задание! ⚡`,
+            `Цель: "${userData.activeGoal.title}". Задача: ${nextTask}`
+          );
+        }
+      }, 15000);
+    }
+    /* -------------------------- */
+
+    function checkAuth() {
+      const saved = localStorage.getItem('challenge_app_data');
+      if (saved) {
+        userData = JSON.parse(saved);
+        document.getElementById('authOverlay').classList.add('hidden');
+        updateUI();
+      } else {
+        document.getElementById('authOverlay').classList.remove('hidden');
+      }
+    }
+
+    function handleAuth(e) {
+      e.preventDefault();
+      const name = document.getElementById('authUsername').value.trim();
+      if (!name) return;
+
+      userData = {
+        username: name,
+        activeGoal: null,
+        tasks: [],
+        completedCount: 0,
+        notificationsEnabled: false
+      };
+
+      saveData();
+      document.getElementById('authOverlay').classList.add('hidden');
+      updateUI();
+    }
+
+    function saveData() {
+      localStorage.setItem('challenge_app_data', JSON.stringify(userData));
+    }
+
+    function logout() {
+      localStorage.removeItem('challenge_app_data');
+      location.reload();
+    }
+
+    function updateUI() {
+      const initial = userData.username.charAt(0).toUpperCase();
+      document.getElementById('displayUsername').innerText = userData.username;
+      document.getElementById('profileName').innerText = userData.username;
+      document.getElementById('userAvatar').innerText = initial;
+      document.getElementById('profileAvatarLarge').innerText = initial;
+
+      renderGoalBanner();
+      renderTasks();
+      renderStats();
+      checkNotificationStatus();
+    }
+
+    function renderGoalBanner() {
+      const container = document.getElementById('activeGoalContainer');
+      const tasksDiv = document.getElementById('tasksContainer');
+
+      if (!userData.activeGoal) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon"><i class="fa-solid fa-flag-checkered"></i></div>
+            <div class="empty-title">У вас нет активной цели</div>
+            <div class="empty-desc">Выберите готовый челлендж ниже или нажмите на плюс, чтобы ИИ составил для вас план</div>
+          </div>
+        `;
+        tasksDiv.style.display = 'none';
+        return;
+      }
+
+      tasksDiv.style.display = 'block';
+
+      const completed = userData.tasks.filter(t => t.done).length;
+      const total = userData.tasks.length;
+      const percent = total ? Math.round((completed / total) * 100) : 0;
+
+      container.innerHTML = `
+        <div class="banner">
+          <div>
+            <div class="banner-title">${userData.activeGoal.title}</div>
+            <div class="banner-sub">День 1 из ${userData.activeGoal.days} • Сегодня</div>
+          </div>
+          <div class="progress-circle" style="--percent: ${percent}">
+            <span class="progress-text">${percent}%</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('taskList');
+      list.innerHTML = '';
+
+      if (!userData.tasks) return;
+
+      userData.tasks.forEach(t => {
+        const item = document.createElement('div');
+        item.className = `task-card ${t.done ? 'completed' : ''}`;
+        item.innerHTML = `
+          <div class="task-info">
+            <h5>${t.text}</h5>
+            <p>10–20 минут</p>
+          </div>
+          <div class="checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask(${t.id})">
+            ${t.done ? '<i class="fa-solid fa-check" style="font-size:12px;"></i>' : ''}
+          </div>
+        `;
+        list.appendChild(item);
+      });
+
+      document.getElementById('taskCount').innerText = userData.tasks.length;
+    }
+
+    function toggleTask(id) {
+      userData.tasks = userData.tasks.map(t => {
+        if (t.id === id) {
+          if (!t.done) userData.completedCount++;
+          else userData.completedCount--;
+          return { ...t, done: !t.done };
+        }
+        return t;
+      });
+
+      saveData();
+      renderGoalBanner();
+      renderTasks();
+      renderStats();
+      scheduleTaskReminder();
+    }
+
+    function selectPreset(title, type, days) {
+      userData.activeGoal = { title, days };
+      const raw = templates[type] || templates.sport;
+      userData.tasks = raw.map((text, i) => ({ id: i + 1, text, done: false }));
+
+      saveData();
+      updateUI();
+      scheduleTaskReminder();
+    }
+
+    function openCreateModal() {
+      document.getElementById('createModal').classList.add('active');
+    }
+
+    function closeCreateModal() {
+      document.getElementById('createModal').classList.remove('active');
+    }
+
+    function handleCreateGoal(e) {
+      e.preventDefault();
+      const title = document.getElementById('newGoalTitle').value.trim();
+      const duration = document.getElementById('newGoalDuration').value;
+
+      if (!title) return;
+
+      userData.activeGoal = { title, days: duration };
+      userData.tasks = [
+        { id: 1, text: `Ознакомиться с основами по теме: ${title}`, done: false },
+        { id: 2, text: `Выполнить первое базовое практическое задание`, done: false },
+        { id: 3, text: `Зафиксировать первые результаты в дневник`, done: false }
+      ];
+
+      saveData();
+      closeCreateModal();
+      updateUI();
+      switchTab('screenHome');
+      scheduleTaskReminder();
+      document.getElementById('newGoalTitle').value = '';
+    }
+
+    function switchTab(screenId, btn) {
+      document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(screenId).classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    function initCalendar() {
+      const calendarStrip = document.getElementById('calendarStrip');
+      calendarStrip.innerHTML = '';
+      const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+      const today = new Date();
+
+      for (let i = -2; i <= 2; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
+        const isToday = i === 0;
+
+        const dayEl = document.createElement('div');
+        dayEl.className = `calendar-day ${isToday ? 'active' : ''}`;
+        dayEl.innerHTML = `
+          <span class="num">${d.getDate()}</span>
+          <span class="dow">${days[d.getDay()]}</span>
+        `;
+        calendarStrip.appendChild(dayEl);
+      }
+
+      const calList = document.getElementById('calendarTaskList');
+      calList.innerHTML = `
+        <div class="empty-state" style="padding:20px;">
+          <div class="empty-desc">Задачи отображаются для выбранного дня</div>
+        </div>
+      `;
+    }
+
+    function renderStats() {
+      document.getElementById('statCompletedTasks').innerText = userData.completedCount || 0;
+      document.getElementById('statGoalsCount').innerText = userData.activeGoal ? 1 : 0;
+      
+      const goalsContainer = document.getElementById('userGoalsList');
+      if (userData.activeGoal) {
+        goalsContainer.innerHTML = `
+          <div class="preset-card">
+            <div>
+              <h4>${userData.activeGoal.title}</h4>
+              <p>Активно • ${userData.activeGoal.days} дней</p>
+            </div>
+            <span class="badge">В процессе</span>
+          </div>
+        `;
+      } else {
+        goalsContainer.innerHTML = `<div class="empty-desc">Нет активных целей</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
